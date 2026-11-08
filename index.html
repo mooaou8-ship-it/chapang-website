@@ -186,7 +186,7 @@ footer{padding:28px 14px}
 </style></head><body>
 <header class="site-header"><div class="brand-mark">🍞</div><h1>ชาปัง</h1><p>ปังปิ้งหอม ๆ และเครื่องดื่มแก้วโปรด</p><section class="panel member-topbar" id="memberPanel" aria-label="บัญชีลูกค้าชาปัง">
  <div class="row"><div><b>👤 สมาชิกชาปัง</b><div id="memberState" class="muted">เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์</div></div><button class="btn primary" id="memberOpen">เข้าสู่ระบบ / สมัครสมาชิก</button><button class="btn hidden" id="memberLogout" type="button" aria-label="ออกจากระบบลูกค้า">ออกจากระบบลูกค้า</button></div>
- <div id="memberForm" class="hidden" style="margin-top:12px"><div class="row"><button class="btn" id="memberLoginTab">เข้าสู่ระบบ</button><button class="btn" id="memberSignupTab">สมัครสมาชิก</button></div><div id="nameField" class="hidden"><label>ชื่อที่แสดง</label><input id="memberName" placeholder="ชื่อของคุณ"/></div><label>อีเมล</label><input id="memberEmail" type="email" placeholder="อีเมล"/><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="memberPassword" type="password" minlength="6" placeholder="รหัสผ่าน"/><button class="btn primary" id="memberSubmit">เข้าสู่ระบบ</button><p id="memberMessage" class="muted" aria-live="polite"></p></div>
+ <div id="memberForm" class="hidden" style="margin-top:12px"><div class="row"><button class="btn" id="memberLoginTab">เข้าสู่ระบบ</button><button class="btn" id="memberSignupTab">สมัครสมาชิก</button></div><div id="nameField" class="hidden"><label>ชื่อที่แสดง</label><input id="memberName" placeholder="ชื่อของคุณ"/></div><label>อีเมล</label><input id="memberEmail" type="email" placeholder="อีเมล"/><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="memberPassword" type="password" minlength="6" placeholder="รหัสผ่าน"/><button class="btn primary" id="memberSubmit">เข้าสู่ระบบ</button><button class="btn" id="memberForgot" type="button">ลืมรหัสผ่าน?</button><p id="memberMessage" class="muted" aria-live="polite"></p></div>
 </section>
 <nav class="main-nav"><button class="nav-btn active" id="homeTab" onclick="showPage('home')">หน้าแรก</button><button class="nav-btn" id="shopTab" onclick="showPage('shop')">เมนูของเรา</button><button class="nav-btn hidden" id="customerOrdersTab" onclick="showPage('customerOrders')">คำสั่งซื้อ</button><button class="nav-btn hidden" id="adminTab" onclick="showPage('admin')">จัดการร้าน</button></nav></header>
 <main class="wrap">
@@ -296,7 +296,7 @@ showPage('home');
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const supabase = createClient("https://fzbksvcgvbbmivpetozx.supabase.co", "sb_publishable_4-k5iqjbqR_SLshcVb6Qrg_cGetaFG2");
@@ -320,6 +320,7 @@ function staffSay(t){$("staffMessage").textContent=t;}
 $("memberOpen").onclick=()=>$("memberForm").classList.toggle("hidden");
 $("memberLoginTab").onclick=()=>mode("login");
 $("memberSignupTab").onclick=()=>mode("signup");
+$("memberForgot").onclick=async()=>{const email=$("memberEmail").value.trim();if(!email){say("กรุณากรอกอีเมลก่อนกดลืมรหัสผ่าน");$("memberEmail").focus();return;}try{await sendPasswordResetEmail(auth,email);say("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ "+email+" แล้ว กรุณาตรวจกล่องจดหมายและสแปม");}catch(e){const m={"auth/user-not-found":"ไม่พบบัญชีอีเมลนี้ในระบบ","auth/invalid-email":"อีเมลไม่ถูกต้อง","auth/too-many-requests":"ลองใหม่ภายหลัง ระบบส่งคำขอถี่เกินไป"};say(m[e.code]||e.message);}};
 $("staffFormToggle").onclick=()=>$("staffLoginForm").classList.toggle("hidden");
 if(!ready){
  $("memberState").textContent="ยังไม่ได้ตั้งค่า Firebase Web Config — ดูคู่มือใน README";
