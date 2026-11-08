@@ -171,12 +171,16 @@ if(!ready){
  const app=initializeApp(firebaseConfig); auth=getAuth(app); db=getFirestore(app);
  onAuthStateChanged(auth, async user=>{
    if(!user){
-     staffMode=false; window.staffRole=null;
-     $("memberState").textContent="เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์";
-     $("memberOpen").classList.remove("hidden"); $("memberLogout").classList.add("hidden");
-     $("staffState").textContent="สำหรับพนักงานที่ได้รับบัญชีจากผู้จัดการเท่านั้น";
-     $("staffFormToggle").classList.remove("hidden"); $("staffLogout").classList.add("hidden");
-     $("managerCreatePanel").classList.add("hidden"); $("adminTab").classList.add("hidden");
+     // Firebase customer auth is separate from Supabase staff auth.
+     // Do not hide the staff back office when a staff session is active.
+     if(!window.staffRole){
+       staffMode=false; window.staffRole=null;
+       $("memberState").textContent="เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์";
+       $("memberOpen").classList.remove("hidden"); $("memberLogout").classList.add("hidden");
+       $("staffState").textContent="สำหรับพนักงานที่ได้รับบัญชีจากผู้จัดการเท่านั้น";
+       $("staffFormToggle").classList.remove("hidden"); $("staffLogout").classList.add("hidden");
+       $("managerCreatePanel").classList.add("hidden"); $("adminTab").classList.add("hidden");
+     }
      return;
    }
    try {
@@ -190,6 +194,8 @@ if(!ready){
        $("memberState").textContent="บัญชีพนักงานกำลังใช้งานอยู่"; $("memberOpen").classList.add("hidden");
        $("managerCreatePanel").classList.toggle("hidden",role!=='manager');
      } else {
+       // Keep an authenticated Supabase staff session independent of Firebase customer auth.
+       if(!window.staffRole){
        staffMode=false; window.staffRole=null;
        $("memberState").textContent=`สวัสดี ${user.displayName||user.email}`;
        $("memberOpen").classList.add("hidden"); $("memberLogout").classList.remove("hidden");
@@ -197,6 +203,7 @@ if(!ready){
        $("adminTab").classList.add("hidden"); $("managerCreatePanel").classList.add("hidden");
        $("customer").value=user.displayName||$("customer").value;
        try { await setDoc(doc(db,"users",user.uid),{uid:user.uid,displayName:user.displayName||"",email:user.email||"",lastLoginAt:serverTimestamp()},{merge:true}); } catch(e){console.warn(e);}
+       }
      }
      $("memberForm").classList.add("hidden");
    } catch(e){ console.error(e); staffSay('ตรวจสอบสิทธิ์ไม่สำเร็จ: '+e.message); }
