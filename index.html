@@ -358,12 +358,12 @@ function downloadBill(id){
  const rows=(o.items||[]).map(i=>{const kind=i.cat==='drink'||i.category==='drink'?'[น้ำ]':i.cat==='toast'||i.category==='toast'?'[ปังปิ้ง]':'[สินค้า]';return '<tr><td>'+billEscape(kind+' '+i.name)+'</td><td>'+Number(i.qty||0)+'</td><td>'+money(Number(i.price||0))+'</td><td>'+money(Number(i.price||0)*Number(i.qty||0))+'</td></tr>'}).join('');
  const html='<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>บิลออเดอร์ '+billEscape(displayOrderNo(o))+'</title><style>@page{size:80mm auto;margin:6mm}body{font-family:Arial,"Noto Sans Thai",sans-serif;color:#222;max-width:420px;margin:20px auto;padding:16px}h1{text-align:center;font-size:24px;margin:0}p{margin:6px 0;font-size:13px}.center{text-align:center}.line{border-top:1px dashed #888;margin:12px 0}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:7px 3px;text-align:left;border-bottom:1px solid #ddd}th:nth-child(n+2),td:nth-child(n+2){text-align:right}.total{text-align:right;font-size:18px;font-weight:bold;margin-top:12px}.muted{color:#666}@media print{body{margin:0;padding:0}}</style></head><body><h1>ชาปัง</h1><p class="center">ใบรายการสั่งซื้อ / ใบเสร็จ</p><div class="line"></div><p><b>ออเดอร์:</b> #'+billEscape(displayOrderNo(o))+'</p><p><b>วันที่:</b> '+billEscape(o.created||'')+'</p><p><b>ลูกค้า:</b> '+billEscape(o.name||'-')+'</p><p><b>โทร:</b> '+billEscape(o.phone||'-')+'</p><p><b>รับสินค้า:</b> '+billEscape(o.fulfillment||'-')+'</p>'+(o.address?'<p><b>ที่อยู่:</b> '+billEscape(o.address)+'</p>':'')+'<p><b>ชำระเงิน:</b> '+billEscape(o.payment||'-')+'</p><div class="line"></div><table><thead><tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th><th>รวม</th></tr></thead><tbody>'+rows+'</tbody></table><div class="total">รวมทั้งสิ้น '+billEscape(money(o.total||0))+'</div><p><b>สถานะ:</b> '+billEscape(o.status||'-')+' · '+(o.paid?'ชำระแล้ว':'ยังไม่ชำระ')+'</p>'+(o.note?'<p><b>หมายเหตุ:</b> '+billEscape(o.note)+'</p>':'')+'<div class="line"></div><p class="center">ขอบคุณที่อุดหนุนร้านชาปัง ♡</p></body></html>';
  const blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download='bill-chapang-'+displayOrderNo(o)+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ a.href=url;a.download='bill-chapang-'+displayOrderNo(o)+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
  notifyUser('ดาวน์โหลดบิลแล้ว เปิดไฟล์เพื่อพิมพ์หรือบันทึกเป็น PDF','success');
 }
 function toggleStock(id){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์แก้ไขสต็อก','error');stock[id]=!stock[id];save();renderProducts();renderAdmin()}
-async function setStatus(id,v){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์','error');let o=orders.find(x=>String(x.id)===String(id));if(!o)return;try{await window.chaPangCloud.updateOrder(id,{status:v});o.status=v;save();renderAdmin();notifyUser('อัปเดตสถานะออเดอร์แล้ว','success')}catch(e){notifyUser(e.message||'อัปเดตสถานะไม่สำเร็จ','error')}}
-async function markPaid(id){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์ยืนยันรับเงิน','error');let o=orders.find(x=>String(x.id)===String(id));if(!o)return;try{await window.chaPangCloud.updateOrder(id,{paid:!o.paid});o.paid=!o.paid;save();renderAdmin();notifyUser('อัปเดตการรับเงินแล้ว','success')}catch(e){notifyUser(e.message||'อัปเดตการรับเงินไม่สำเร็จ','error')}}
+async function setStatus(id,v){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์','error');let o=orders.find(x=>String(x.id)===String(id));if(!o)return;try{const saved=await window.chaPangCloud.updateOrder(o.cloudId||id,{status:v});o.status=saved.status||v;save();renderAdmin();notifyUser('อัปเดตสถานะออเดอร์แล้ว','success')}catch(e){renderAdmin();notifyUser(e.message||'อัปเดตสถานะไม่สำเร็จ','error')}}
+async function markPaid(id){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์ยืนยันรับเงิน','error');let o=orders.find(x=>String(x.id)===String(id));if(!o)return;try{const saved=await window.chaPangCloud.updateOrder(o.cloudId||id,{paid:!o.paid});o.paid=typeof saved.paid==='boolean'?saved.paid:!o.paid;save();renderAdmin();notifyUser('อัปเดตการรับเงินแล้ว','success')}catch(e){renderAdmin();notifyUser(e.message||'อัปเดตการรับเงินไม่สำเร็จ','error')}}
 function exportOrders(){let rows=[['เลขออเดอร์','ชื่อ','เบอร์','ยอดรวม','สถานะ','ชำระแล้ว','วันที่'],...orders.map(o=>[displayOrderNo(o),o.name,o.phone,o.total,o.status,o.paid?'ใช่':'ไม่',o.created])];let csv='\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='orders.csv';a.click();URL.revokeObjectURL(a.href)}
 renderProducts();renderCart();
 showPage('home');
@@ -521,10 +521,15 @@ if(!ready){
      save();renderAdmin();return orders.length;
    },
    updateOrder: async(id,changes)=>{
-     const {data,error}=await supabase.from("orders").update(changes).eq("firebase_order_id",String(id)).select("id").maybeSingle();
-     if(error)throw error;
-     if(!data)throw Error("ไม่มีสิทธิ์แก้ไขออเดอร์นี้ หรือไม่พบออเดอร์");
-     return true;
+     const {data:sessionData}=await supabase.auth.getSession();
+     if(!sessionData?.session)throw Error("เซสชันพนักงานหมดอายุ กรุณาเข้าสู่ระบบพนักงานใหม่");
+     const isUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(id));
+     let query=supabase.from("orders").update(changes);
+     query=isUuid?query.eq("id",String(id)):query.eq("firebase_order_id",String(id));
+     const {data,error}=await query.select("id,status,paid").maybeSingle();
+     if(error)throw Error(error.message||"ฐานข้อมูลไม่อนุญาตให้อัปเดตออเดอร์");
+     if(!data)throw Error("อัปเดตไม่สำเร็จ: ไม่พบออเดอร์หรือบัญชีนี้ไม่มีสิทธิ์แก้ไข");
+     return data;
    },
    isSignedIn:()=>!!auth.currentUser||!!window.staffRole
  };
