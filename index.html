@@ -215,7 +215,7 @@ footer{padding:28px 14px}
 <button class="btn primary" style="width:100%" onclick="placeOrder()">ยืนยันสั่งซื้อ</button><p class="muted">ระบบตัวอย่างนี้ยังไม่เชื่อมชำระเงินอัตโนมัติ กรุณาติดต่อร้านเพื่อยืนยันการโอน</p>
 </div></section>
 <section id="staffAccess" class="hidden"><div class="row" style="justify-content:space-between"><h2>🔐 พื้นที่พนักงาน</h2><button class="btn" onclick='showPage("home")'>กลับหน้าร้าน</button></div><section class="panel" id="staffPanel" style="margin:14px auto;max-width:900px">
- <div class="row"><div><b>🔐 ระบบพนักงานชาปัง</b><div id="staffState" class="muted">สำหรับพนักงานที่ได้รับบัญชีจากผู้จัดการเท่านั้น</div></div><button class="btn" id="staffFormToggle">เข้าสู่ระบบพนักงาน</button><button class="btn hidden" id="staffLogout">ออกจากระบบพนักงาน</button></div>
+ <div class="row"><div><b>🔐 ระบบพนักงานชาปัง</b><div id="staffState" class="muted">สำหรับพนักงานที่ได้รับบัญชีจากผู้จัดการเท่านั้น</div></div><button class="btn" id="staffFormToggle">เข้าสู่ระบบพนักงาน</button><button class="btn hidden" id="staffOrderButton" type="button" onclick="showPage('shop')">＋ สั่งสินค้าแทนลูกค้า</button><button class="btn hidden" id="staffLogout">ออกจากระบบพนักงาน</button></div>
  <div id="staffLoginForm" class="hidden" style="margin-top:12px"><label>อีเมลพนักงาน</label><input id="staffEmail" type="email" autocomplete="username" placeholder="อีเมลพนักงาน"><label>รหัสผ่าน</label><input id="staffPassword" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"><button class="btn primary" id="staffLoginBtn">เข้าสู่ระบบพนักงาน</button><p id="staffMessage" class="muted" aria-live="polite"></p></div>
  <div id="managerCreatePanel" class="hidden" style="margin-top:14px;border-top:1px solid #ead9c6;padding-top:12px"><h3>➕ สร้างบัญชีพนักงาน</h3><p class="muted">เฉพาะผู้จัดการเท่านั้น • พนักงานสมัครเองไม่ได้</p><label>ชื่อพนักงาน</label><input id="newStaffName" placeholder="ชื่อ-นามสกุล"><label>อีเมลพนักงาน</label><input id="newStaffEmail" type="email" placeholder="อีเมล"><label>รหัสผ่านเริ่มต้น (อย่างน้อย 8 ตัว)</label><input id="newStaffPassword" type="password" minlength="8" placeholder="ตั้งรหัสผ่านเริ่มต้น"><label>ตำแหน่ง</label><select id="newStaffRole"><option value="assistant_manager">ผู้ช่วยผู้จัดการ</option><option value="team_lead">หัวหน้าทีม</option><option value="employee">พนักงาน</option></select><button class="btn primary" id="createStaffBtn">สร้างบัญชีพนักงาน</button><p id="createStaffMessage" class="muted" aria-live="polite"></p></div>
 </section></section>
@@ -255,7 +255,7 @@ function openCart(){showPage('shop');document.getElementById('cartBackdrop').cla
 function closeCart(){document.getElementById('cartBackdrop').classList.remove('open');document.getElementById('cartPanel').classList.remove('open');document.body.style.overflow=''}
 function notifyUser(message,type='info'){const el=document.getElementById('appToast');if(!el)return;el.textContent=String(message);el.className='app-toast show'+(type==='error'?' error':type==='success'?' success':'');clearTimeout(window.appToastTimer);window.appToastTimer=setTimeout(()=>el.classList.remove('show'),2800);}
 function cartFeedback(message){let el=document.getElementById('cartFeedback');el.textContent=message;el.classList.add('show');clearTimeout(window.cartFeedbackTimer);window.cartFeedbackTimer=setTimeout(()=>el.classList.remove('show'),1700)}
-async function placeOrder(){let chosen=products.filter(p=>cart[p.id]);if(!chosen.length)return notifyUser('กรุณาเลือกสินค้าก่อน','error');let name=document.getElementById('customer').value.trim();let phone=document.getElementById('phone').value.trim();if(!name||!phone)return notifyUser('กรุณากรอกชื่อและเบอร์โทร','error');if(!window.chaPangCloud||!window.chaPangCloud.isSignedIn())return notifyUser('กรุณาเข้าสู่ระบบหรือสมัครสมาชิกก่อนสั่งซื้อ','error');let fulfillment=document.getElementById('fulfill').value;if(fulfillment==='จัดส่ง'&&!document.getElementById('address').value.trim())return notifyUser('กรุณากรอกที่อยู่จัดส่ง','error');let order={id:Date.now(),orderNo:'',name,phone,fulfillment,address:document.getElementById('address').value,payment:document.getElementById('payment').value,note:document.getElementById('note').value,items:chosen.map(p=>({name:p.name,cat:p.cat,category:p.cat==='drink'?'เครื่องดื่ม':'ปังปิ้ง',qty:cart[p.id],price:p.price})),total:total(),status:'รอรับออเดอร์',paid:false,created:new Date().toLocaleString('th-TH')};try{const result=await window.chaPangCloud.saveOrder(order);order.cloudId=result.id;order.orderNo=result.orderNo;orders.unshift(order);save();cart={};renderCart();closeCart();notifyUser('ส่งคำสั่งซื้อสำเร็จ! เลขออเดอร์ '+order.orderNo,'success');showPage('customerOrders');await loadCustomerOrders(true);}catch(e){console.error(e);notifyUser('บันทึกออเดอร์ไม่สำเร็จ: '+e.message,'error');}}
+async function placeOrder(){let chosen=products.filter(p=>cart[p.id]);if(!chosen.length)return notifyUser('กรุณาเลือกสินค้าก่อน','error');let name=document.getElementById('customer').value.trim();let phone=document.getElementById('phone').value.trim();if(!name||!phone)return notifyUser('กรุณากรอกชื่อและเบอร์โทร','error');if(!window.chaPangCloud||!window.chaPangCloud.isSignedIn())return notifyUser('กรุณาเข้าสู่ระบบก่อนสั่งซื้อ','error');let fulfillment=document.getElementById('fulfill').value;if(fulfillment==='จัดส่ง'&&!document.getElementById('address').value.trim())return notifyUser('กรุณากรอกที่อยู่จัดส่ง','error');let order={id:Date.now(),orderNo:'',name,phone,fulfillment,address:document.getElementById('address').value,payment:document.getElementById('payment').value,note:document.getElementById('note').value,items:chosen.map(p=>({name:p.name,cat:p.cat,category:p.cat==='drink'?'เครื่องดื่ม':'ปังปิ้ง',qty:cart[p.id],price:p.price})),total:total(),status:'รอรับออเดอร์',paid:false,created:new Date().toLocaleString('th-TH')};try{const result=await window.chaPangCloud.saveOrder(order);order.cloudId=result.id;order.orderNo=result.orderNo;cart={};renderCart();closeCart();notifyUser('ส่งคำสั่งซื้อสำเร็จ! เลขออเดอร์ '+order.orderNo,'success');if(window.staffRole){await window.chaPangCloud.loadStaffOrders();showPage('admin');}else{showPage('customerOrders');await loadCustomerOrders(true);}}catch(e){console.error(e);notifyUser('บันทึกออเดอร์ไม่สำเร็จ: '+e.message,'error');}}
 function renderCustomerOrders(data){
  const host=document.getElementById('customerOrdersList');if(!host)return;
  if(!data||!data.length){host.innerHTML='<div class="orders-empty"><div class="empty-icon">🧾</div><b>ยังไม่มีคำสั่งซื้อ</b><p>เมื่อสั่งเมนูแล้ว รายการและสถานะจะมาแสดงที่หน้านี้</p><button class="btn primary" onclick="showPage(\'shop\')">เลือกเมนูเลย</button></div>';return;}
@@ -276,7 +276,7 @@ async function loadCustomerOrders(showLoading=false){
  try{const list=await window.chaPangCloud.getCustomerOrders();renderCustomerOrders(list);return list;}
  catch(e){console.error(e);host.innerHTML='<div class="orders-empty">โหลดสถานะไม่สำเร็จ <button class="btn" onclick="loadCustomerOrders(true)">ลองอีกครั้ง</button></div>';return [];}
 }
-function renderAdmin(){document.getElementById('stockList').innerHTML=products.map(p=>`<div class="row" style="padding:8px 0;border-bottom:1px solid #eee"><span>${p.name} · ${p.price} บาท</span><button class="btn ${stock[p.id]?'':'sold'}" onclick="toggleStock('${p.id}')">${stock[p.id]?'มีสินค้า':'หมดแล้ว'}</button></div>`).join('');document.getElementById('orders').innerHTML=orders.length?orders.map(o=>`<div class="order"><div class="row"><b>ออเดอร์ ${displayOrderNo(o)}</b><span class="tag">${o.status}</span></div><p>${o.name} · ${o.phone}</p><p>${o.items.map(i=>`<span class="order-item-kind">${i.cat==='drink'||i.category==='drink'?'[น้ำ]':i.cat==='toast'||i.category==='toast'?'[ปังปิ้ง]':'[สินค้า]'}</span> ${i.name} × ${i.qty}`).join('<br>')}</p><b>${money(o.total)}</b><p class="muted">${o.fulfillment} · ${o.payment}<br>${o.created}</p><button class="btn" onclick="downloadBill(${o.id})">ดาวน์โหลดบิล</button><div class="row"><select onchange="setStatus(${o.id},this.value)"><option ${o.status==='รอรับออเดอร์'?'selected':''}>รอรับออเดอร์</option><option ${o.status==='กำลังทำ'?'selected':''}>กำลังทำ</option><option ${o.status==='เสร็จแล้ว'?'selected':''}>เสร็จแล้ว</option><option ${o.status==='ยกเลิก'?'selected':''}>ยกเลิก</option></select><button class="btn" onclick="markPaid(${o.id})">${o.paid?'รับเงินแล้ว':'ยืนยันรับเงิน'}</button></div></div>`).join(''):'<p class="muted">ยังไม่มีออเดอร์</p>';let completed=orders.filter(o=>o.paid&&!['ยกเลิก'].includes(o.status));document.getElementById('summary').innerHTML=`<b>ออเดอร์ทั้งหมด:</b> ${orders.length} รายการ<br><b>ยอดรับเงินที่ยืนยันแล้ว:</b> <span class="total">${money(completed.reduce((s,o)=>s+o.total,0))}</span>`}
+function renderAdmin(){document.getElementById('stockList').innerHTML=products.map(p=>`<div class="row" style="padding:8px 0;border-bottom:1px solid #eee"><span>${p.name} · ${p.price} บาท</span><button class="btn ${stock[p.id]?'':'sold'}" onclick="toggleStock('${p.id}')">${stock[p.id]?'มีสินค้า':'หมดแล้ว'}</button></div>`).join('');document.getElementById('orders').innerHTML=orders.length?orders.map(o=>`<div class="order"><div class="row"><b>ออเดอร์ ${displayOrderNo(o)}</b><span class="tag">${o.status}</span></div><p>${o.name} · ${o.phone}</p><p>${o.items.map(i=>`<span class="order-item-kind">${i.cat==='drink'||i.category==='drink'?'[น้ำ]':i.cat==='toast'||i.category==='toast'?'[ปังปิ้ง]':'[สินค้า]'}</span> ${i.name} × ${i.qty}`).join('<br>')}</p><b>${money(o.total)}</b><p class="muted">${o.fulfillment} · ${o.payment}<br>${o.created}</p><button class="btn" onclick="downloadBill(${JSON.stringify(String(o.id))})">ดาวน์โหลดบิล</button><div class="row"><select onchange="setStatus(${JSON.stringify(String(o.id))},this.value)"><option ${o.status==='รอรับออเดอร์'?'selected':''}>รอรับออเดอร์</option><option ${o.status==='กำลังทำ'?'selected':''}>กำลังทำ</option><option ${o.status==='เสร็จแล้ว'?'selected':''}>เสร็จแล้ว</option><option ${o.status==='ยกเลิก'?'selected':''}>ยกเลิก</option></select><button class="btn" onclick="markPaid(${JSON.stringify(String(o.id))})">${o.paid?'รับเงินแล้ว':'ยืนยันรับเงิน'}</button></div></div>`).join(''):'<p class="muted">ยังไม่มีออเดอร์</p>';let completed=orders.filter(o=>o.paid&&!['ยกเลิก'].includes(o.status));document.getElementById('summary').innerHTML=`<b>ออเดอร์ทั้งหมด:</b> ${orders.length} รายการ<br><b>ยอดรับเงินที่ยืนยันแล้ว:</b> <span class="total">${money(completed.reduce((s,o)=>s+o.total,0))}</span>`}
 function billEscape(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function downloadBill(id){
  const o=orders.find(x=>String(x.id)===String(id));
@@ -297,7 +297,7 @@ showPage('home');
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const supabase = createClient("https://fzbksvcgvbbmivpetozx.supabase.co", "sb_publishable_4-k5iqjbqR_SLshcVb6Qrg_cGetaFG2");
 
@@ -345,12 +345,12 @@ if(!ready){
      return;
    }
    try {
-     const token=await user.getIdTokenResult(true); const role=token.claims.role||null;
+     const {data: staffSessionData}=await supabase.auth.getSession(); if(staffSessionData?.session) await supabase.auth.signOut(); const token=await user.getIdTokenResult(true); const role=token.claims.role||null;
      if(['manager','assistant_manager','team_lead','employee'].includes(role)){
        staffMode=true; window.staffRole=role;
        const labels={manager:'ผู้จัดการ',assistant_manager:'ผู้ช่วยผู้จัดการ',team_lead:'หัวหน้าทีม',employee:'พนักงาน'};
        $("staffState").textContent=`เข้าสู่ระบบแล้ว: ${user.displayName||user.email} • ${labels[role]}`;
-       $("staffFormToggle").classList.add("hidden"); $("staffLoginForm").classList.add("hidden");
+       $("staffFormToggle").classList.add("hidden"); $("staffLoginForm").classList.add("hidden"); $("staffOrderButton").classList.remove("hidden");
        $("staffLogout").classList.remove("hidden"); $("adminTab").classList.remove("hidden");
        $("memberState").textContent="บัญชีพนักงานกำลังใช้งานอยู่"; $("customerOrdersTab").classList.add("hidden"); $("memberOpen").classList.add("hidden");
        $("managerCreatePanel").classList.toggle("hidden",role!=='manager');
@@ -358,12 +358,12 @@ if(!ready){
        // Keep an authenticated Supabase staff session independent of Firebase customer auth.
        if(!window.staffRole){
        staffMode=false; window.staffRole=null;
-       $("memberState").textContent=`สวัสดี ${user.displayName||user.email}`;
+       const profileSnap=await getDoc(doc(db,"users",user.uid)); const savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):""; const customerDisplayName=user.displayName||savedName||user.email; $("memberState").textContent=`สวัสดี ${customerDisplayName}`;
        $("customerOrdersTab").classList.remove("hidden");
        $("memberOpen").classList.add("hidden"); $("memberLogout").classList.remove("hidden");
        $("staffState").textContent="บัญชีนี้เป็นบัญชีลูกค้า ไม่ใช่บัญชีพนักงาน";
        $("adminTab").classList.add("hidden"); $("managerCreatePanel").classList.add("hidden");
-       $("customer").value=user.displayName||$("customer").value;
+       $("customer").value=customerDisplayName;
        try { await setDoc(doc(db,"users",user.uid),{uid:user.uid,displayName:user.displayName||"",email:user.email||"",lastLoginAt:serverTimestamp()},{merge:true}); } catch(e){console.warn(e);}
        $("customerOrdersTab").classList.remove("hidden");
        loadCustomerOrders(true);
@@ -372,7 +372,7 @@ if(!ready){
      $("memberForm").classList.add("hidden");
    } catch(e){ console.error(e); staffSay('ตรวจสอบสิทธิ์ไม่สำเร็จ: '+e.message); }
  });
- $("memberSubmit").onclick=async()=>{const email=$("memberEmail").value.trim(), password=$("memberPassword").value, name=$("memberName").value.trim();try{if(memberMode==="signup"){if(!name)throw Error("กรุณากรอกชื่อ");const c=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(c.user,{displayName:name});await setDoc(doc(db,"users",c.user.uid),{uid:c.user.uid,displayName:name,email,role:"customer",createdAt:serverTimestamp()});say("สมัครสมาชิกสำเร็จ");}else{await signInWithEmailAndPassword(auth,email,password);say("เข้าสู่ระบบสำเร็จ");}}catch(e){const m={"auth/email-already-in-use":"อีเมลนี้สมัครแล้ว","auth/invalid-email":"อีเมลไม่ถูกต้อง","auth/weak-password":"รหัสผ่านต้องมีอย่างน้อย 6 ตัว","auth/invalid-credential":"อีเมลหรือรหัสผ่านไม่ถูกต้อง"};say(m[e.code]||e.message);}};
+ $("memberSubmit").onclick=async()=>{const email=$("memberEmail").value.trim(), password=$("memberPassword").value, name=$("memberName").value.trim();try{await supabase.auth.signOut();if(memberMode==="signup"){if(!name)throw Error("กรุณากรอกชื่อ");const c=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(c.user,{displayName:name});await setDoc(doc(db,"users",c.user.uid),{uid:c.user.uid,displayName:name,email,role:"customer",createdAt:serverTimestamp()});say("สมัครสมาชิกสำเร็จ");}else{await signInWithEmailAndPassword(auth,email,password);say("เข้าสู่ระบบสำเร็จ");}}catch(e){const m={"auth/email-already-in-use":"อีเมลนี้สมัครแล้ว","auth/invalid-email":"อีเมลไม่ถูกต้อง","auth/weak-password":"รหัสผ่านต้องมีอย่างน้อย 6 ตัว","auth/invalid-credential":"อีเมลหรือรหัสผ่านไม่ถูกต้อง"};say(m[e.code]||e.message);}};
  $("memberLogout").onclick=async()=>{try{await signOut(auth);$("customerOrdersTab").classList.add("hidden");say("ออกจากระบบแล้ว");}catch(e){say(e.message);}};
  // Staff accounts use Supabase Auth; customer accounts remain on Firebase.
  supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -382,7 +382,8 @@ if(!ready){
      staffSay("บัญชีนี้ไม่มีสิทธิ์พนักงานหรือถูกปิดใช้งาน");
      await supabase.auth.signOut(); return;
    }
-   staffMode=true; window.staffRole=profile.role;
+   if(auth.currentUser) await signOut(auth);
+   staffMode=true; window.staffRole=profile.role; $("staffOrderButton").classList.remove("hidden");
    const labels={manager:"ผู้จัดการ",assistant_manager:"ผู้ช่วยผู้จัดการ",team_lead:"หัวหน้าทีม",employee:"พนักงาน"};
    $("staffState").textContent=`เข้าสู่ระบบแล้ว: ${profile.display_name||session.user.email} • ${labels[profile.role]||profile.role}`;
    $("staffFormToggle").classList.add("hidden"); $("staffLoginForm").classList.add("hidden"); $("staffLogout").classList.remove("hidden");
@@ -390,12 +391,23 @@ if(!ready){
    try { const count=await window.chaPangCloud.loadStaffOrders(); staffSay(`โหลดออเดอร์จากระบบกลางแล้ว ${count} รายการ`); }
    catch(e){ staffSay("โหลดออเดอร์ไม่สำเร็จ: "+e.message); }
  });
- $("staffLoginBtn").onclick=async()=>{staffSay("กำลังเข้าสู่ระบบ…");const {error}=await supabase.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error)staffSay("เข้าสู่ระบบไม่สำเร็จ: "+error.message);};
- $("staffLogout").onclick=async()=>{await supabase.auth.signOut();staffMode=false;window.staffRole=null;$("staffState").textContent="ออกจากระบบพนักงานแล้ว";$("staffFormToggle").classList.remove("hidden");$("staffLogout").classList.add("hidden");$("managerCreatePanel").classList.add("hidden");$("adminTab").classList.add("hidden");};
+ $("staffLoginBtn").onclick=async()=>{staffSay("กำลังเข้าสู่ระบบ…");await signOut(auth);const {error}=await supabase.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error)staffSay("เข้าสู่ระบบไม่สำเร็จ: "+error.message);};
+ $("staffLogout").onclick=async()=>{await supabase.auth.signOut();staffMode=false;window.staffRole=null;$("staffState").textContent="ออกจากระบบพนักงานแล้ว";$("staffFormToggle").classList.remove("hidden");$("staffOrderButton").classList.add("hidden");$("staffLogout").classList.add("hidden");$("managerCreatePanel").classList.add("hidden");$("adminTab").classList.add("hidden");};
  $("createStaffBtn").onclick=async()=>{const btn=$("createStaffBtn"),msg=$("createStaffMessage");btn.disabled=true;msg.textContent="กำลังสร้างบัญชี…";try{const {data,error}=await supabase.functions.invoke("manager-create-staff",{body:{display_name:$("newStaffName").value.trim(),email:$("newStaffEmail").value.trim(),password:$("newStaffPassword").value,role:$("newStaffRole").value}});if(error)throw error;if(data?.error)throw Error(data.error);msg.textContent=`สร้างบัญชีสำเร็จ: ${data.staff.email}`;$("newStaffName").value=$("newStaffEmail").value=$("newStaffPassword").value="";}catch(e){msg.textContent=e.message||"สร้างบัญชีไม่สำเร็จ";}finally{btn.disabled=false;}};
  window.chaPangCloud={
    saveOrder: async order=>{
-     if(!auth.currentUser)throw Error("กรุณาเข้าสู่ระบบก่อนสั่งซื้อ");
+     const staffSession = window.staffRole ? (await supabase.auth.getSession()).data.session : null;
+     if (staffSession) {
+       const response = await fetch("https://fzbksvcgvbbmivpetozx.supabase.co/functions/v1/create-staff-order", {
+         method:"POST",
+         headers:{"Content-Type":"application/json","apikey":"sb_publishable_4-k5iqjbqR_SLshcVb6Qrg_cGetaFG2","Authorization":"Bearer "+staffSession.access_token},
+         body:JSON.stringify(order)
+       });
+       const result=await response.json().catch(()=>({}));
+       if(!response.ok||!result.ok)throw Error(result.error||"บันทึกออเดอร์พนักงานไม่สำเร็จ");
+       return {id:result.id,orderNo:result.orderNo};
+     }
+     if(!auth.currentUser)throw Error("กรุณาเข้าสู่ระบบลูกค้าก่อนสั่งซื้อ");
      const token=await auth.currentUser.getIdToken(true);
      const response=await fetch("https://fzbksvcgvbbmivpetozx.supabase.co/functions/v1/create-customer-order",{
        method:"POST",
@@ -437,7 +449,7 @@ if(!ready){
      if(!data)throw Error("ไม่มีสิทธิ์แก้ไขออเดอร์นี้ หรือไม่พบออเดอร์");
      return true;
    },
-   isSignedIn:()=>!!auth.currentUser
+   isSignedIn:()=>!!auth.currentUser||!!window.staffRole
  };
 }
 </script>
