@@ -236,8 +236,8 @@ function downloadBill(id){
  notifyUser('ดาวน์โหลดบิลแล้ว เปิดไฟล์เพื่อพิมพ์หรือบันทึกเป็น PDF','success');
 }
 function toggleStock(id){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์แก้ไขสต็อก','error');stock[id]=!stock[id];save();renderProducts();renderAdmin()}
-function setStatus(id,v){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์','error');let o=orders.find(x=>x.id===id);if(o){o.status=v;save();renderAdmin()}}
-function markPaid(id){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์ยืนยันรับเงิน','error');let o=orders.find(x=>x.id===id);if(o){o.paid=!o.paid;save();renderAdmin()}}
+async function setStatus(id,v){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์เปลี่ยนสถานะออเดอร์','error');let o=orders.find(x=>String(x.id)===String(id));if(!o)return;try{await window.chaPangCloud.updateOrder(id,{status:v});o.status=v;save();renderAdmin();notifyUser('อัปเดตสถานะออเดอร์แล้ว','success')}catch(e){notifyUser(e.message||'อัปเดตสถานะไม่สำเร็จ','error')}}
+async function markPaid(id){if(!['manager','assistant_manager','team_lead'].includes(window.staffRole))return notifyUser('บัญชีนี้ไม่มีสิทธิ์ยืนยันรับเงิน','error');let o=orders.find(x=>String(x.id)===String(id));if(!o)return;try{await window.chaPangCloud.updateOrder(id,{paid:!o.paid});o.paid=!o.paid;save();renderAdmin();notifyUser('อัปเดตการรับเงินแล้ว','success')}catch(e){notifyUser(e.message||'อัปเดตการรับเงินไม่สำเร็จ','error')}}
 function exportOrders(){let rows=[['เลขออเดอร์','ชื่อ','เบอร์','ยอดรวม','สถานะ','ชำระแล้ว','วันที่'],...orders.map(o=>[displayOrderNo(o),o.name,o.phone,o.total,o.status,o.paid?'ใช่':'ไม่',o.created])];let csv='\uFEFF'+rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(',')).join('\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='orders.csv';a.click();URL.revokeObjectURL(a.href)}
 renderProducts();renderCart();
 showPage('home');
@@ -330,12 +330,44 @@ if(!ready){
    $("staffState").textContent=`เข้าสู่ระบบแล้ว: ${profile.display_name||session.user.email} • ${labels[profile.role]||profile.role}`;
    $("staffFormToggle").classList.add("hidden"); $("staffLoginForm").classList.add("hidden"); $("staffLogout").classList.remove("hidden");
    $("adminTab").classList.remove("hidden"); $("managerCreatePanel").classList.toggle("hidden",profile.role!=="manager");
+   try { const count=await window.chaPangCloud.loadStaffOrders(); staffSay(`โหลดออเดอร์จากระบบกลางแล้ว ${count} รายการ`); }
+   catch(e){ staffSay("โหลดออเดอร์ไม่สำเร็จ: "+e.message); }
  });
  $("staffLoginBtn").onclick=async()=>{staffSay("กำลังเข้าสู่ระบบ…");const {error}=await supabase.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error)staffSay("เข้าสู่ระบบไม่สำเร็จ: "+error.message);};
  $("staffLogout").onclick=async()=>{await supabase.auth.signOut();staffMode=false;window.staffRole=null;$("staffState").textContent="ออกจากระบบพนักงานแล้ว";$("staffFormToggle").classList.remove("hidden");$("staffLogout").classList.add("hidden");$("managerCreatePanel").classList.add("hidden");$("adminTab").classList.add("hidden");};
  $("createStaffBtn").onclick=async()=>{const btn=$("createStaffBtn"),msg=$("createStaffMessage");btn.disabled=true;msg.textContent="กำลังสร้างบัญชี…";try{const {data,error}=await supabase.functions.invoke("manager-create-staff",{body:{display_name:$("newStaffName").value.trim(),email:$("newStaffEmail").value.trim(),password:$("newStaffPassword").value,role:$("newStaffRole").value}});if(error)throw error;if(data?.error)throw Error(data.error);msg.textContent=`สร้างบัญชีสำเร็จ: ${data.staff.email}`;$("newStaffName").value=$("newStaffEmail").value=$("newStaffPassword").value="";}catch(e){msg.textContent=e.message||"สร้างบัญชีไม่สำเร็จ";}finally{btn.disabled=false;}};
  window.chaPangCloud={
-   saveOrder: async order=>{if(!auth.currentUser)throw Error("กรุณาเข้าสู่ระบบก่อนสั่งซื้อ");const record={...order,customerUid:auth.currentUser.uid,customerEmail:auth.currentUser.email,createdAt:serverTimestamp()};const ref=await addDoc(collection(db,"orders"),record);return ref.id;},
+   saveOrder: async order=>{
+     if(!auth.currentUser)throw Error("กรุณาเข้าสู่ระบบก่อนสั่งซื้อ");
+     const token=await auth.currentUser.getIdToken(true);
+     const response=await fetch("https://fzbksvcgvbbmivpetozx.supabase.co/functions/v1/create-customer-order",{
+       method:"POST",
+       headers:{"Content-Type":"application/json","apikey":"sb_publishable_4-k5iqjbqR_SLshcVb6Qrg_cGetaFG2","Authorization":"Bearer "+token},
+       body:JSON.stringify(order)
+     });
+     const result=await response.json().catch(()=>({}));
+     if(!response.ok||!result.ok)throw Error(result.error||"บันทึกออเดอร์ไม่สำเร็จ");
+     return result.id;
+   },
+   loadStaffOrders: async()=>{
+     const {data,error}=await supabase.from("orders").select("*").order("created_at",{ascending:false}).limit(500);
+     if(error)throw error;
+     orders=(data||[]).map(row=>({
+       id:Number.isFinite(Number(row.firebase_order_id))?Number(row.firebase_order_id):row.firebase_order_id,
+       cloudId:row.id,cloudOrderId:row.firebase_order_id,orderNo:row.order_no,
+       name:row.customer_name,phone:row.customer_phone,fulfillment:row.fulfillment,
+       address:row.delivery_address||"",payment:row.payment_method,note:row.note||"",
+       items:row.items||[],total:Number(row.total),status:row.status,paid:row.paid,
+       created:row.customer_created_label||new Date(row.created_at).toLocaleString("th-TH")
+     }));
+     save();renderAdmin();return orders.length;
+   },
+   updateOrder: async(id,changes)=>{
+     const {data,error}=await supabase.from("orders").update(changes).eq("firebase_order_id",String(id)).select("id").maybeSingle();
+     if(error)throw error;
+     if(!data)throw Error("ไม่มีสิทธิ์แก้ไขออเดอร์นี้ หรือไม่พบออเดอร์");
+     return true;
+   },
    isSignedIn:()=>!!auth.currentUser
  };
 }
