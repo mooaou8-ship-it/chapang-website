@@ -358,7 +358,7 @@ if(!ready){
        // Keep an authenticated Supabase staff session independent of Firebase customer auth.
        if(!window.staffRole){
        staffMode=false; window.staffRole=null;
-       const profileSnap=await getDoc(doc(db,"users",user.uid)); const savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):""; const customerDisplayName=user.displayName||savedName||user.email; $("memberState").textContent=`สวัสดี ${customerDisplayName}`;
+       let savedName=""; try{const profileSnap=await getDoc(doc(db,"users",user.uid)); savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):"";}catch(e){console.warn("อ่านชื่อสมาชิกจากโปรไฟล์ไม่ได้",e);} const customerDisplayName=user.displayName||savedName||user.email; $("memberState").textContent=`สวัสดี ${customerDisplayName}`;
        $("customerOrdersTab").classList.remove("hidden");
        $("memberOpen").classList.add("hidden"); $("memberLogout").classList.remove("hidden");
        $("staffState").textContent="บัญชีนี้เป็นบัญชีลูกค้า ไม่ใช่บัญชีพนักงาน";
@@ -376,7 +376,10 @@ if(!ready){
  $("memberLogout").onclick=async()=>{try{await signOut(auth);$("customerOrdersTab").classList.add("hidden");say("ออกจากระบบแล้ว");}catch(e){say(e.message);}};
  // Staff accounts use Supabase Auth; customer accounts remain on Firebase.
  supabase.auth.onAuthStateChange(async (_event, session) => {
-   if (!session?.user) return;
+   if (!session?.user) {
+     if(window.staffRole){staffMode=false;window.staffRole=null;$("staffOrderButton").classList.add("hidden");$("staffLogout").classList.add("hidden");$("staffFormToggle").classList.remove("hidden");$("adminTab").classList.add("hidden");$("managerCreatePanel").classList.add("hidden");}
+     return;
+   }
    const { data: profile, error } = await supabase.from("staff_profiles").select("display_name,role,active").eq("user_id", session.user.id).maybeSingle();
    if (error || !profile || !profile.active) {
      staffSay("บัญชีนี้ไม่มีสิทธิ์พนักงานหรือถูกปิดใช้งาน");
@@ -451,6 +454,7 @@ if(!ready){
    },
    isSignedIn:()=>!!auth.currentUser||!!window.staffRole
  };
+ if(auth.currentUser&&!window.staffRole){$("memberOpen").classList.add("hidden");$("memberLogout").classList.remove("hidden");$("customerOrdersTab").classList.remove("hidden");loadCustomerOrders(true);}
 }
 </script>
 
