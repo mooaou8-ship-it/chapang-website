@@ -136,18 +136,37 @@ footer{padding:28px 14px}
 #memberLogout.hidden{display:none!important}
 @media(max-width:520px){#memberPanel>.row>div{flex-basis:100%}#memberLogout{width:100%}}
 
+
+/* Customer account controls sit in the top header, CRG-style */
+.site-header .member-topbar{display:flex;flex-direction:column;gap:8px;width:min(100%,1080px);max-width:1080px;margin:10px auto 8px;padding:10px 14px;background:rgba(255,254,250,.96);border:1px solid var(--ui-line);border-radius:14px;box-shadow:0 3px 12px rgba(67,47,29,.045)}
+.site-header .member-topbar>.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0}
+.site-header .member-topbar>.row>div{flex:1 1 220px;min-width:0}
+.site-header .member-topbar #memberState{font-size:12px}
+.site-header .member-topbar #memberForm{margin-top:4px!important;padding-top:10px;border-top:1px solid var(--ui-line)}
+.site-header .member-topbar #memberForm>.row{display:flex;gap:8px;flex-wrap:wrap}
+.site-header .member-topbar input{width:100%;max-width:100%}
+.site-header .main-nav{margin-top:2px}
+@media(max-width:650px){
+ .site-header .member-topbar{margin:8px 0 6px;padding:9px 10px}
+ .site-header .member-topbar>.row{gap:8px}
+ .site-header .member-topbar>.row>div{flex-basis:100%}
+ .site-header .member-topbar #memberOpen,.site-header .member-topbar #memberLogout{width:100%}
+ .site-header .member-topbar #memberForm>.row button{flex:1}
+}
+
 </style></head><body>
-<header class="site-header"><div class="brand-mark">🍞</div><h1>ชาปัง</h1><p>ปังปิ้งหอม ๆ และเครื่องดื่มแก้วโปรด</p><nav class="main-nav"><button class="nav-btn active" id="homeTab" onclick="showPage('home')">หน้าแรก</button><button class="nav-btn" id="shopTab" onclick="showPage('shop')">เมนูของเรา</button><button class="nav-btn hidden" id="adminTab" onclick="showPage('admin')">จัดการร้าน</button></nav></header>
+<header class="site-header"><div class="brand-mark">🍞</div><h1>ชาปัง</h1><p>ปังปิ้งหอม ๆ และเครื่องดื่มแก้วโปรด</p><section class="panel" id="memberPanel" class="member-topbar">
+ <div class="row"><div><b>👤 สมาชิกชาปัง</b><div id="memberState" class="muted">เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์</div></div><button class="btn primary" id="memberOpen">เข้าสู่ระบบ / สมัครสมาชิก</button><button class="btn hidden" id="memberLogout" type="button" aria-label="ออกจากระบบลูกค้า">ออกจากระบบลูกค้า</button></div>
+ <div id="memberForm" class="hidden" style="margin-top:12px"><div class="row"><button class="btn" id="memberLoginTab">เข้าสู่ระบบ</button><button class="btn" id="memberSignupTab">สมัครสมาชิก</button></div><div id="nameField" class="hidden"><label>ชื่อที่แสดง</label><input id="memberName" placeholder="ชื่อของคุณ"/></div><label>อีเมล</label><input id="memberEmail" type="email" placeholder="อีเมล"/><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="memberPassword" type="password" minlength="6" placeholder="รหัสผ่าน"/><button class="btn primary" id="memberSubmit">เข้าสู่ระบบ</button><p id="memberMessage" class="muted" aria-live="polite"></p></div>
+</section>
+<nav class="main-nav"><button class="nav-btn active" id="homeTab" onclick="showPage('home')">หน้าแรก</button><button class="nav-btn" id="shopTab" onclick="showPage('shop')">เมนูของเรา</button><button class="nav-btn hidden" id="adminTab" onclick="showPage('admin')">จัดการร้าน</button></nav></header>
 <main class="wrap">
 <section id="home" class="home-hero">
  <div class="hero-copy"><span class="eyebrow">WELCOME TO ชาปัง</span><h2>ความสุขง่าย ๆ<br>เริ่มต้นที่ <em>ชาปัง</em></h2><p>ปังปิ้งหอมกรุ่น เครื่องดื่มสดชื่น เลือกความอร่อยที่ใช่ แล้วสั่งได้ง่าย ๆ ในไม่กี่ขั้นตอน</p><button class="btn primary hero-cta" onclick="showPage('shop')">เลือกเมนูเลย <span>→</span></button><div class="hero-points"><span>✦ ทำสดใหม่</span><span>✦ อร่อยทุกวัน</span><span>✦ สั่งง่าย</span></div></div>
  <div class="hero-art"><div class="hero-circle"></div><div class="hero-toast">🍞</div><div class="hero-drink">🥤</div><span class="hero-sticker">อร่อย<br>ลงตัว ♡</span></div>
 </section>
 <div class="notice">🍞 ปังปิ้ง 1 ชุด มี 2 แผ่น • 🥤 เครื่องดื่มขวดละ 20 บาท</div>
-<section class="panel" id="memberPanel" style="margin:14px auto;max-width:900px">
- <div class="row"><div><b>👤 สมาชิกชาปัง</b><div id="memberState" class="muted">เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์</div></div><button class="btn primary" id="memberOpen">เข้าสู่ระบบ / สมัครสมาชิก</button><button class="btn hidden" id="memberLogout" type="button" aria-label="ออกจากระบบลูกค้า">ออกจากระบบลูกค้า</button></div>
- <div id="memberForm" class="hidden" style="margin-top:12px"><div class="row"><button class="btn" id="memberLoginTab">เข้าสู่ระบบ</button><button class="btn" id="memberSignupTab">สมัครสมาชิก</button></div><div id="nameField" class="hidden"><label>ชื่อที่แสดง</label><input id="memberName" placeholder="ชื่อของคุณ"/></div><label>อีเมล</label><input id="memberEmail" type="email" placeholder="อีเมล"/><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="memberPassword" type="password" minlength="6" placeholder="รหัสผ่าน"/><button class="btn primary" id="memberSubmit">เข้าสู่ระบบ</button><p id="memberMessage" class="muted" aria-live="polite"></p></div>
-</section>
+
 <section class="panel" id="staffPanel" style="margin:14px auto;max-width:900px">
  <div class="row"><div><b>🔐 ระบบพนักงานชาปัง</b><div id="staffState" class="muted">สำหรับพนักงานที่ได้รับบัญชีจากผู้จัดการเท่านั้น</div></div><button class="btn" id="staffFormToggle">เข้าสู่ระบบพนักงาน</button><button class="btn hidden" id="staffLogout">ออกจากระบบพนักงาน</button></div>
  <div id="staffLoginForm" class="hidden" style="margin-top:12px"><label>อีเมลพนักงาน</label><input id="staffEmail" type="email" autocomplete="username" placeholder="อีเมลพนักงาน"><label>รหัสผ่าน</label><input id="staffPassword" type="password" autocomplete="current-password" placeholder="รหัสผ่าน"><button class="btn primary" id="staffLoginBtn">เข้าสู่ระบบพนักงาน</button><p id="staffMessage" class="muted" aria-live="polite"></p></div>
