@@ -203,8 +203,8 @@ button[aria-busy="true"],select[aria-busy="true"]{opacity:.72;cursor:wait}
 @media(prefers-reduced-motion:reduce){.order-wait-spinner,.order-wait-dots i{animation:none}}
 </style></head><body>
 <header class="site-header"><div class="brand-mark">🍞</div><h1>ชาปัง</h1><p>ปังปิ้งหอม ๆ และเครื่องดื่มแก้วโปรด</p><section class="panel member-topbar" id="memberPanel" aria-label="บัญชีลูกค้าชาปัง">
- <div class="row"><div><b>👤 สมาชิกชาปัง</b><div id="memberState" class="muted">เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์</div></div><button class="btn primary" id="memberOpen">เข้าสู่ระบบ / สมัครสมาชิก</button><button class="btn hidden" id="memberLogout" type="button" aria-label="ออกจากระบบลูกค้า">ออกจากระบบลูกค้า</button></div>
- <div id="memberForm" class="hidden" style="margin-top:12px"><div class="row"><button class="btn" id="memberLoginTab">เข้าสู่ระบบ</button><button class="btn" id="memberSignupTab">สมัครสมาชิก</button></div><div id="nameField" class="hidden"><label>ชื่อที่แสดง</label><input id="memberName" placeholder="ชื่อของคุณ"/></div><label>อีเมล</label><input id="memberEmail" type="email" placeholder="อีเมล"/><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="memberPassword" type="password" minlength="6" placeholder="รหัสผ่าน"/><button class="btn primary" id="memberSubmit">เข้าสู่ระบบ</button><button class="btn" id="memberForgot" type="button">ลืมรหัสผ่าน?</button><p id="memberMessage" class="muted" aria-live="polite"></p></div>
+ <div class="row"><div><b>👤 สมาชิกชาปัง</b><div id="memberState" class="muted">เข้าสู่ระบบเพื่อบันทึกคำสั่งซื้อออนไลน์</div></div><button class="btn primary" id="memberOpen" aria-expanded="false">เข้าสู่ระบบ / สมัครสมาชิก</button><button class="btn hidden" id="memberLogout" type="button" aria-label="ออกจากระบบลูกค้า">ออกจากระบบลูกค้า</button></div>
+ <div id="memberForm" class="hidden" style="margin-top:12px"><div style="padding:4px 0 10px"><b>บัญชีลูกค้าชาปัง</b><div class="muted">ใช้บัญชีอีเมลและรหัสผ่านสำหรับสั่งซื้อและติดตามออเดอร์</div></div><div class="row"><button class="btn primary" id="memberLoginTab" type="button">เข้าสู่ระบบ</button><button class="btn" id="memberSignupTab" type="button">สมัครสมาชิก</button></div><div id="nameField" class="hidden"><label>ชื่อที่แสดง</label><input id="memberName" autocomplete="name" placeholder="ชื่อของคุณ"/></div><label>อีเมล</label><input id="memberEmail" type="email" autocomplete="username" placeholder="อีเมล"/><label>รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label><input id="memberPassword" type="password" minlength="6" autocomplete="current-password" placeholder="รหัสผ่าน"/><button class="btn primary" id="memberSubmit" type="button">เข้าสู่ระบบ</button><button class="btn" id="memberForgot" type="button">ลืมรหัสผ่าน?</button><p id="memberMessage" class="muted" aria-live="polite"></p></div>
 </section>
 <nav class="main-nav"><button class="nav-btn active" id="homeTab" onclick="showPage('home')">หน้าแรก</button><button class="nav-btn" id="shopTab" onclick="showPage('shop')">เมนูของเรา</button><button class="nav-btn hidden" id="customerOrdersTab" onclick="showPage('customerOrders')">คำสั่งซื้อ</button><button class="nav-btn hidden" id="adminTab" onclick="showPage('admin')">จัดการร้าน</button></nav></header>
 <main class="wrap">
@@ -413,9 +413,9 @@ const ready = Object.values(firebaseConfig).every(v => v && !v.startsWith("ใ�
 const $ = id => document.getElementById(id);
 let auth=null, db=null, memberMode="login", staffMode=false;
 function say(t){$("memberMessage").textContent=t;}
-function mode(m){memberMode=m;$("nameField").classList.toggle("hidden",m!=="signup");$("memberSubmit").textContent=m==="signup"?"สมัครสมาชิก":"เข้าสู่ระบบ";say("");}
+function mode(m){memberMode=m;$("nameField").classList.toggle("hidden",m!=="signup");$("memberSubmit").textContent=m==="signup"?"สมัครสมาชิก":"เข้าสู่ระบบ";$("memberLoginTab").classList.toggle("primary",m==="login");$("memberSignupTab").classList.toggle("primary",m==="signup");$("memberPassword").autocomplete=m==="signup"?"new-password":"current-password";say("");}
 function staffSay(t){$("staffMessage").textContent=t;}
-$("memberOpen").onclick=()=>$("memberForm").classList.toggle("hidden");
+$("memberOpen").onclick=()=>{const opening=$("memberForm").classList.contains("hidden");$("memberForm").classList.toggle("hidden",!opening);$("memberOpen").textContent=opening?"ปิดหน้าสมาชิก":"เข้าสู่ระบบ / สมัครสมาชิก";$("memberOpen").setAttribute("aria-expanded",String(opening));if(opening){mode("login");$("memberEmail").focus();}};
 $("memberLoginTab").onclick=()=>mode("login");
 $("memberSignupTab").onclick=()=>mode("signup");
 $("memberForgot").onclick=async()=>{const email=$("memberEmail").value.trim();if(!email){say("กรุณากรอกอีเมลก่อนกดลืมรหัสผ่าน");$("memberEmail").focus();return;}try{await sendPasswordResetEmail(auth,email);say("ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ "+email+" แล้ว กรุณาตรวจกล่องจดหมายและสแปม");}catch(e){const m={"auth/user-not-found":"ไม่พบบัญชีอีเมลนี้ในระบบ","auth/invalid-email":"อีเมลไม่ถูกต้อง","auth/too-many-requests":"ลองใหม่ภายหลัง ระบบส่งคำขอถี่เกินไป"};say(m[e.code]||e.message);}};
@@ -443,7 +443,7 @@ if(!ready){
      return;
    }
    try {
-     const {data: staffSessionData}=await supabase.auth.getSession(); if(staffSessionData?.session) await supabase.auth.signOut(); const token=await user.getIdTokenResult(true); const role=token.claims.role||null;
+     const token=await user.getIdTokenResult(); const role=token.claims.role||null; if(["manager","assistant_manager","team_lead","employee"].includes(role)){const {data: staffSessionData}=await supabase.auth.getSession();if(staffSessionData?.session)await supabase.auth.signOut();}
      if(['manager','assistant_manager','team_lead','employee'].includes(role)){
        staffMode=true; window.staffRole=role;
        const labels={manager:'ผู้จัดการ',assistant_manager:'ผู้ช่วยผู้จัดการ',team_lead:'หัวหน้าทีม',employee:'พนักงาน'};
@@ -456,13 +456,13 @@ if(!ready){
        // Keep an authenticated Supabase staff session independent of Firebase customer auth.
        if(!window.staffRole){
        staffMode=false; window.staffRole=null;
-       let savedName=""; try{const profileSnap=await getDoc(doc(db,"users",user.uid)); savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):"";}catch(e){console.warn("อ่านชื่อสมาชิกจากโปรไฟล์ไม่ได้",e);} const customerDisplayName=user.displayName||savedName||user.email; $("memberState").textContent=`สวัสดี ${customerDisplayName}`;
+       const customerDisplayName=user.displayName||user.email||"สมาชิกชาปัง"; $("memberState").textContent=`สวัสดี ${customerDisplayName}`;
        $("customerOrdersTab").classList.remove("hidden");
        $("memberOpen").classList.add("hidden"); $("memberLogout").classList.remove("hidden");
        $("staffState").textContent="บัญชีนี้เป็นบัญชีลูกค้า ไม่ใช่บัญชีพนักงาน";
        $("adminTab").classList.add("hidden"); $("managerCreatePanel").classList.add("hidden");
        $("customer").value=customerDisplayName;
-       try { await setDoc(doc(db,"users",user.uid),{uid:user.uid,displayName:user.displayName||"",email:user.email||"",lastLoginAt:serverTimestamp()},{merge:true}); } catch(e){console.warn(e);}
+       void getDoc(doc(db,"users",user.uid)).then(profileSnap=>{const savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):"";if(!user.displayName&&savedName){$("memberState").textContent=`สวัสดี ${savedName}`;if(!$("customer").value)$("customer").value=savedName;}}).catch(e=>console.warn("อ่านชื่อสมาชิกจากโปรไฟล์ไม่ได้",e)); void setDoc(doc(db,"users",user.uid),{uid:user.uid,displayName:user.displayName||"",email:user.email||"",lastLoginAt:serverTimestamp()},{merge:true}).catch(e=>console.warn("บันทึกเวลาเข้าใช้ไม่ได้",e));
        $("customerOrdersTab").classList.remove("hidden");
        loadCustomerOrders(true);
        }
@@ -470,7 +470,8 @@ if(!ready){
      $("memberForm").classList.add("hidden");
    } catch(e){ console.error(e); staffSay('ตรวจสอบสิทธิ์ไม่สำเร็จ: '+e.message); }
  });
- $("memberSubmit").onclick=async()=>{const email=$("memberEmail").value.trim(), password=$("memberPassword").value, name=$("memberName").value.trim();try{await supabase.auth.signOut();if(memberMode==="signup"){if(!name)throw Error("กรุณากรอกชื่อ");const c=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(c.user,{displayName:name});await setDoc(doc(db,"users",c.user.uid),{uid:c.user.uid,displayName:name,email,role:"customer",createdAt:serverTimestamp()});say("สมัครสมาชิกสำเร็จ");}else{await signInWithEmailAndPassword(auth,email,password);say("เข้าสู่ระบบสำเร็จ");}}catch(e){const m={"auth/email-already-in-use":"อีเมลนี้สมัครแล้ว","auth/invalid-email":"อีเมลไม่ถูกต้อง","auth/weak-password":"รหัสผ่านต้องมีอย่างน้อย 6 ตัว","auth/invalid-credential":"อีเมลหรือรหัสผ่านไม่ถูกต้อง"};say(m[e.code]||e.message);}};
+ $("memberPassword").addEventListener("keydown",e=>{if(e.key==="Enter")$("memberSubmit").click();}); $("staffPassword").addEventListener("keydown",e=>{if(e.key==="Enter")$("staffLoginBtn").click();});
+ $("memberSubmit").onclick=async()=>{const btn=$("memberSubmit"),email=$("memberEmail").value.trim(),password=$("memberPassword").value,name=$("memberName").value.trim();if(btn.disabled)return;if(!email){say("กรุณากรอกอีเมล");$("memberEmail").focus();return;}if(!password){say("กรุณากรอกรหัสผ่าน");$("memberPassword").focus();return;}if(memberMode==="signup"&&!name){say("กรุณากรอกชื่อ");$("memberName").focus();return;}const submittingMode=memberMode;btn.disabled=true;btn.textContent=submittingMode==="signup"?"กำลังสมัครสมาชิก…":"กำลังเข้าสู่ระบบ…";say("กำลังตรวจสอบบัญชี กรุณารอสักครู่");try{if(submittingMode==="signup"){const c=await createUserWithEmailAndPassword(auth,email,password);await updateProfile(c.user,{displayName:name});void setDoc(doc(db,"users",c.user.uid),{uid:c.user.uid,displayName:name,email,role:"customer",createdAt:serverTimestamp()}).catch(e=>console.warn("บันทึกโปรไฟล์สมาชิกไม่สำเร็จ",e));say("สมัครสมาชิกสำเร็จ");}else{await signInWithEmailAndPassword(auth,email,password);say("เข้าสู่ระบบสำเร็จ");}}catch(e){const m={"auth/email-already-in-use":"อีเมลนี้สมัครแล้ว กรุณาเข้าสู่ระบบ","auth/invalid-email":"รูปแบบอีเมลไม่ถูกต้อง","auth/weak-password":"รหัสผ่านต้องมีอย่างน้อย 6 ตัว","auth/invalid-credential":"อีเมลหรือรหัสผ่านไม่ถูกต้อง","auth/too-many-requests":"มีการลองเข้าสู่ระบบหลายครั้ง กรุณารอสักครู่","auth/network-request-failed":"เชื่อมต่ออินเทอร์เน็ตไม่ได้ กรุณาลองใหม่"};say(m[e.code]||"เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองใหม่");}finally{btn.disabled=false;btn.textContent=memberMode==="signup"?"สมัครสมาชิก":"เข้าสู่ระบบ";}};
  $("memberLogout").onclick=async()=>{try{await signOut(auth);$("customerOrdersTab").classList.add("hidden");say("ออกจากระบบแล้ว");}catch(e){say(e.message);}};
  // Staff accounts use Supabase Auth; customer accounts remain on Firebase.
  supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -492,7 +493,7 @@ if(!ready){
    try { const count=await window.chaPangCloud.loadStaffOrders(); staffSay(`โหลดออเดอร์จากระบบกลางแล้ว ${count} รายการ`); }
    catch(e){ staffSay("โหลดออเดอร์ไม่สำเร็จ: "+e.message); }
  });
- $("staffLoginBtn").onclick=async()=>{staffSay("กำลังเข้าสู่ระบบ…");await signOut(auth);const {error}=await supabase.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error)staffSay("เข้าสู่ระบบไม่สำเร็จ: "+error.message);};
+ $("staffLoginBtn").onclick=async()=>{const btn=$("staffLoginBtn"),old=btn.textContent;if(btn.disabled)return;if(!$("staffEmail").value.trim()||!$("staffPassword").value){staffSay("กรุณากรอกอีเมลและรหัสผ่านพนักงาน");return;}btn.disabled=true;btn.textContent="กำลังเข้าสู่ระบบ…";staffSay("กำลังตรวจสอบบัญชีพนักงาน");try{await signOut(auth);const {error}=await supabase.auth.signInWithPassword({email:$("staffEmail").value.trim(),password:$("staffPassword").value});if(error)throw error;}catch(e){staffSay("เข้าสู่ระบบไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่"));}finally{btn.disabled=false;btn.textContent=old;}};
  $("staffLogout").onclick=async()=>{await supabase.auth.signOut();staffMode=false;window.staffRole=null;$("staffState").textContent="ออกจากระบบพนักงานแล้ว";$("staffFormToggle").classList.remove("hidden");$("staffOrderButton").classList.add("hidden");$("staffLogout").classList.add("hidden");$("managerCreatePanel").classList.add("hidden");$("adminTab").classList.add("hidden");};
  $("createStaffBtn").onclick=async()=>{const btn=$("createStaffBtn"),msg=$("createStaffMessage");btn.disabled=true;msg.textContent="กำลังสร้างบัญชี…";try{const {data,error}=await supabase.functions.invoke("manager-create-staff",{body:{display_name:$("newStaffName").value.trim(),email:$("newStaffEmail").value.trim(),password:$("newStaffPassword").value,role:$("newStaffRole").value}});if(error)throw error;if(data?.error)throw Error(data.error);msg.textContent=`สร้างบัญชีสำเร็จ: ${data.staff.email}`;$("newStaffName").value=$("newStaffEmail").value=$("newStaffPassword").value="";}catch(e){msg.textContent=e.message||"สร้างบัญชีไม่สำเร็จ";}finally{btn.disabled=false;}};
  window.chaPangCloud={
@@ -509,7 +510,7 @@ if(!ready){
        return {id:result.id,orderNo:result.orderNo};
      }
      if(!auth.currentUser)throw Error("กรุณาเข้าสู่ระบบลูกค้าก่อนสั่งซื้อ");
-     const token=await auth.currentUser.getIdToken(true);
+     const token=await auth.currentUser.getIdToken();
      const response=await fetch("https://fzbksvcgvbbmivpetozx.supabase.co/functions/v1/create-customer-order",{
        method:"POST",
        headers:{"Content-Type":"application/json","apikey":"sb_publishable_4-k5iqjbqR_SLshcVb6Qrg_cGetaFG2","Authorization":"Bearer "+token},
