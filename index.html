@@ -501,7 +501,7 @@ if(!ready){
        $("staffState").textContent="บัญชีนี้เป็นบัญชีลูกค้า ไม่ใช่บัญชีพนักงาน";
        $("adminTab").classList.add("hidden"); $("managerCreatePanel").classList.add("hidden");
        $("customer").value=customerDisplayName;
-       void getDoc(doc(db,"users",user.uid)).then(profileSnap=>{const savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):"";if(!user.displayName&&savedName){$("memberState").textContent=`สวัสดี ${savedName}`;if(!$("customer").value)$("customer").value=savedName;}}).catch(e=>console.warn("อ่านชื่อสมาชิกจากโปรไฟล์ไม่ได้",e)); void setDoc(doc(db,"users",user.uid),{uid:user.uid,displayName:user.displayName||"",email:user.email||"",lastLoginAt:serverTimestamp()},{merge:true}).catch(e=>console.warn("บันทึกเวลาเข้าใช้ไม่ได้",e));
+       void getDoc(doc(db,"users",user.uid)).then(profileSnap=>{const savedName=profileSnap.exists()?String(profileSnap.data().displayName||""):"";if(!user.displayName&&savedName){$("memberState").textContent=`เข้าสู่ระบบแล้ว • ลูกค้า: ${savedName}`;if(!$("customer").value)$("customer").value=savedName;}}).catch(e=>console.warn("อ่านชื่อสมาชิกจากโปรไฟล์ไม่ได้",e)); void setDoc(doc(db,"users",user.uid),{uid:user.uid,displayName:user.displayName||"",email:user.email||"",lastLoginAt:serverTimestamp()},{merge:true}).catch(e=>console.warn("บันทึกเวลาเข้าใช้ไม่ได้",e));
        $("customerOrdersTab").classList.remove("hidden");
        loadCustomerOrders(true);
        }
