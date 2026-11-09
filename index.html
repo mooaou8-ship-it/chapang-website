@@ -392,6 +392,35 @@ function exportOrders(){let rows=[['เลขออเดอร์','ชื่�
 renderProducts();renderCart();
 showPage('home');
 </script>
+<script>
+/* เปิดแผงบัญชีได้ทันที โดยไม่ต้องรอ Firebase/Supabase SDK โหลดเสร็จ */
+(()=>{
+ const $=id=>document.getElementById(id);
+ const open=$("memberOpen"),form=$("memberForm");
+ const setMode=mode=>{
+  $("nameField")?.classList.toggle("hidden",mode!=="signup");
+  $("memberLoginTab")?.classList.toggle("primary",mode==="login");
+  $("memberSignupTab")?.classList.toggle("primary",mode==="signup");
+  const submit=$("memberSubmit"),password=$("memberPassword");
+  if(submit)submit.textContent=mode==="signup"?"สมัครสมาชิก":"เข้าสู่ระบบ";
+  if(password)password.autocomplete=mode==="signup"?"new-password":"current-password";
+  if($("memberMessage"))$("memberMessage").textContent="";
+ };
+ if(open&&form){
+  open.onclick=()=>{
+   const opening=form.classList.contains("hidden");
+   form.classList.toggle("hidden",!opening);
+   open.textContent=opening?"ปิดหน้าสมาชิก":"เข้าสู่ระบบ / สมัครสมาชิก";
+   open.setAttribute("aria-expanded",String(opening));
+   if(opening){setMode("login");$("memberEmail")?.focus();}
+  };
+  $("memberLoginTab")?.addEventListener("click",()=>setMode("login"));
+  $("memberSignupTab")?.addEventListener("click",()=>setMode("signup"));
+  if($("memberSubmit"))$("memberSubmit").onclick=()=>{if($("memberMessage"))$("memberMessage").textContent="กำลังเตรียมระบบบัญชี กรุณารอสักครู่แล้วลองอีกครั้ง";};
+  if($("memberForgot"))$("memberForgot").onclick=()=>{if($("memberMessage"))$("memberMessage").textContent="กำลังเตรียมระบบบัญชี กรุณารอสักครู่แล้วลองอีกครั้ง";};
+ }
+})();
+</script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
